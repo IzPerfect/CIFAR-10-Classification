@@ -10,6 +10,7 @@ import os
 from utils import *
 
 
+
 class CifarDNN(object):
     def __init__(self, img_shape, class_num, epoch = 10, batch_size = 32, learning_rate = 0.001, actf = 'relu',
                      layer1 = 32, layer2 = 64,  drop_rate = 0.2, val_split = 0.2):
@@ -73,13 +74,14 @@ if __name__ == '__main__':
     parser.add_argument('--layer2', dest = 'layer2', type = int, default = 64, help ='hidden layer2 (default : 64)')
     parser.add_argument('--drop_rate', dest = 'drop_rate', type = float, default = 0.2, help ='drop rate (default : 0.2)')
     parser.add_argument('--val_split', dest = 'val_split', type = float, default = 0.2, help ='validation split rate (default : 0.2)')
+    parser.add_argument('--normalize', dest = 'normalize', type = int, default = 1, help ='1:normalize data ,another number:use raw data (default : 1(True))')
 
     parser.add_argument('--batch_test_size', dest = 'batch_test_size', type = int, default = 32, help ='batch_test_size (default : 32)')
     args = parser.parse_args()
 
     print("Args : ", args)
 
-    (X_train, Y_train), (X_test, Y_test) = cifar10_data_load(datasets.cifar10)
+    (X_train, Y_train), (X_test, Y_test) = cifar10_data_load(datasets.cifar10, args.normalize)
     cifar_model = CifarDNN(img_shape = X_train.shape[1], class_num = Y_train.shape[1], epoch = args.epoch,
         batch_size = args.batch_size, learning_rate = args.learning_rate,
             actf = args.actf, layer1 = args.layer1, layer2 = args.layer2, drop_rate = args.drop_rate, val_split = args.val_split)
@@ -95,6 +97,8 @@ if __name__ == '__main__':
     print('predict clas : ',cifar_model.model.predict_classes(X_test[:3]))
     print('actual class : ', np.where(Y_test[:3])[1])
 
-    # model history plot
-    plt.plot(history_train.history['loss'])
+    # model history plot - loss and accuracy
+    plot_loss(history_train)
+    plt.show()
+    plot_acc(history_train)
     plt.show()
