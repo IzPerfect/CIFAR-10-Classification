@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from keras.optimizers import Adam
 import argparse
 import os
+from utils import *
 
 
 class CifarDNN(object):
@@ -58,24 +59,7 @@ class CifarDNN(object):
         return self.result
 
 
-#  data pre-processing function
-def data_load(data):
-    (X_train, Y_train), (X_test, Y_test) = data.load_data()
 
-    X_train = X_train.astype('float32')
-    X_test = X_test.astype('float32')
-
-    Y_train = keras.utils.to_categorical(Y_train)
-    Y_test = keras.utils.to_categorical(Y_test)
-
-    L, W, H, C = X_train.shape
-    X_train = X_train.reshape(-1, W*H*C)
-    X_test = X_test.reshape(-1, W*H*C)
-
-    X_train /= 255.
-    X_test /= 255.
-
-    return (X_train, Y_train), (X_test, Y_test)
 
 
 if __name__ == '__main__':
@@ -94,7 +78,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     print("Args : ", args)
-    (X_train, Y_train), (X_test, Y_test) = data_load(datasets.cifar10)
+
+    (X_train, Y_train), (X_test, Y_test) = cifar10_data_load(datasets.cifar10)
     cifar_model = CifarDNN(img_shape = X_train.shape[1], class_num = Y_train.shape[1], epoch = args.epoch,
         batch_size = args.batch_size, learning_rate = args.learning_rate,
             actf = args.actf, layer1 = args.layer1, layer2 = args.layer2, drop_rate = args.drop_rate, val_split = args.val_split)
@@ -102,7 +87,7 @@ if __name__ == '__main__':
     # model train
     history_train = cifar_model.train(X_train, Y_train)
 
-    #  model evaluate
+    # model evaluate
     result = cifar_model.show_eval(X_test, Y_test, args.batch_test_size)
     print('Test Loss : ', result[0])
     print('Test Accuracy : ', result[1]*100, '%')
