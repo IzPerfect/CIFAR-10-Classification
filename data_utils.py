@@ -76,7 +76,7 @@ def plot_loss(history, title = None):
 # show cifar images 4XN, if normalize is False
 # dataX : image data, image labels, number of images
 # display original data, not pre-processing data
-def show_images(dataX, dataY, num_images):
+def show_images(dataX, dataY, num_images = 4):
 
     labels =  ['airplane','automobile','bird','cat','deer','dog','frog','horse','ship','truck']
 
@@ -92,7 +92,26 @@ def show_images(dataX, dataY, num_images):
         # change 'float' to 'int', reshape to show image
         plt.imshow(dataX[i].reshape(32, 32, 3))
 
+def show_images_compare(dataX, dataY, predY, num_images = 4):
 
+    labels =  ['airplane','automobile','bird','cat','deer','dog','frog','horse','ship','truck']
+
+    fig = plt.figure(figsize = (10,5))
+
+    for i in range(num_images):
+        snap = fig.add_subplot(int(round(num_images/4)),4, i + 1)
+        snap.set_xticks([])
+        snap.set_yticks([])
+
+
+        snap.set_title('True : {}\nPrediction : {}'
+            .format(labels[int(dataY[i])],labels[int(predY[i])]))
+        # change 'float' to 'int', reshape to show image
+
+        plt.imshow(dataX[i].reshape(32, 32, 3))
+
+
+# show result of prediction as confusion matrix
 def  confusion_mat(true_label, pred_label):
     confusion_result = metrics.confusion_matrix(true_label, pred_label)
     return confusion_result
