@@ -12,6 +12,7 @@ import os
 
 
 
+
 class CifarDNN(object):
     def __init__(self, img_shape, class_num, actf = 'relu', learning_rate = 0.001, layer1 = 32, layer2 = 64,  drop_rate = 0.2):
 
@@ -84,3 +85,6 @@ class CifarDNN(object):
         pred_classes = np.argmax(pred_classes, axis = 1)
 
         return pred_classes
+
+    def show_model(self):
+        return print(self.model.summary())
