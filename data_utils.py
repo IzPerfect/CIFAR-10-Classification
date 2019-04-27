@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import keras
 from sklearn import model_selection, metrics
+from sklearn.metrics import classification_report
+
 
 # data pre-processing function
 def cifar10_data_load(data, norm_data=1):
@@ -112,6 +114,18 @@ def show_images_compare(dataX, dataY, predY, num_images = 4):
 
 
 # show result of prediction as confusion matrix
-def  confusion_mat(true_label, pred_label):
+def  confusion_mat(true_label, pred_label, target_names = None):
     confusion_result = metrics.confusion_matrix(true_label, pred_label)
+
     return confusion_result
+
+def confusion_report(true_label, pred_label, target_names = None):
+
+    if target_names == None:
+        target_names = np.unique(true_label)
+        target_names = target_names.sort()
+
+    confusion_report_result =\
+        classification_report(true_label, pred_label, target_names=target_names)
+
+    return confusion_report_result

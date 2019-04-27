@@ -1,10 +1,14 @@
 import keras
-import numpy as np
 from keras import models
 from keras.layers import Dense, Dropout, Flatten, Activation
-import matplotlib.pyplot as plt
 from keras.optimizers import Adam
+from keras.callbacks import ModelCheckpoint
+from keras.models import load_model
+import matplotlib.pyplot as plt
+import numpy as np
 from data_utils import *
+import os
+
 
 
 
@@ -42,10 +46,30 @@ class CifarDNN(object):
         return model
 
     # train model
-    def train(self, X_train, Y_train, epoch = 10, batch_size = 32, val_split = 0.2):
+    def train(self, X_train, Y_train, epoch = 10, batch_size = 32, val_split = 0.2, save_model = True):
+
+        save_dir = './save_model/'
+        if not os.path.exists(save_dir): # if there is no exist, make the path
+            os.makedirs(save_dir)
+
+        model_path = save_dir + '{epoch:02d}-{val_loss:.4f}-{acc:.4f}.hd5'
+        cb_checkpoint = ModelCheckpoint(filepath = model_path, monitor = 'val_loss',
+            verbose = 1, save_best_only = True)
+
         self.history = self.model.fit(X_train, Y_train, epochs = epoch,
-                                          batch_size = batch_size, validation_split = val_split)
+                                          batch_size = batch_size, validation_split = val_split,
+                                            callbacks = [cb_checkpoint])
+
+
         return self.history
+
+    def saved_model_use(self, save_dir = None):
+        if save_dir == None:
+            return print('No path')
+
+        self.model.load_weights(save_dir)
+
+        return print("Loaded model from '{}'".format(save_dir))
 
     # evalutate model
     def show_eval(self, X_test, Y_test, batch_test_size = 10):
