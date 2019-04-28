@@ -8,10 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from data_utils import *
 import os
-
-
-
-
+import time
 
 class CifarDNN(object):
     def __init__(self, img_shape, class_num, actf = 'relu', learning_rate = 0.001, layer1 = 32, layer2 = 64,  drop_rate = 0.2):
@@ -49,7 +46,11 @@ class CifarDNN(object):
     # train model
     def train(self, X_train, Y_train, epoch = 10, batch_size = 32, val_split = 0.2, save_model = True):
 
-        save_dir = './save_model/'
+        # current time
+        now = time.localtime()
+        time_now = "%04d-%02d-%02d_%02dh%02dm%02ds" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
+
+        save_dir = './save_model/model/' + time_now + '/'
         if not os.path.exists(save_dir): # if there is no exist, make the path
             os.makedirs(save_dir)
 
@@ -60,6 +61,22 @@ class CifarDNN(object):
         self.history = self.model.fit(X_train, Y_train, epochs = epoch,
                                           batch_size = batch_size, validation_split = val_split,
                                             callbacks = [cb_checkpoint])
+
+
+        save_dir_history = './save_model/history/'+ time_now + '/'
+        if not os.path.exists(save_dir_history): # if there is no exist, make the path
+            os.makedirs(save_dir_history)
+
+
+        fig_acc = plt.figure(1)
+        plt.plot(self.history.history['acc'])
+        fig_acc.savefig(save_dir_history + 'acc_history' + '.jpg')
+        np.save(save_dir_history + 'acc_history' + '.npy', self.history.history['acc'])
+
+        fig_loss = plt.figure(2)
+        plt.plot(self.history.history['loss'])
+        fig_acc.savefig(save_dir_history + 'loss_history' + '.jpg')
+        np.save(save_dir_history + 'loss_history' + '.npy', self.history.history['loss'])
 
 
         return self.history
