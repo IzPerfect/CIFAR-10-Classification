@@ -7,7 +7,30 @@ from sklearn.metrics import classification_report
 
 
 # data pre-processing function
-def cifar10_data_load(data, norm_data=1):
+def cifar_VGG_data_load(data, norm_data=1):
+    (X_train, Y_train), (X_test, Y_test) = data.load_data()
+
+    X_train = X_train.astype('float32')
+    X_test = X_test.astype('float32')
+
+    Y_train = keras.utils.to_categorical(Y_train)
+    Y_test = keras.utils.to_categorical(Y_test)
+
+    print('Data type changed to float32, label type changed to categorical')
+    # normalize data
+    if norm_data == 1:
+        X_train, X_test = normalize(X_train, X_test)
+        print('Normalize Data')
+    else:
+        pass
+    #X_train /= 255.
+    #X_test /= 255.
+
+    return (X_train, Y_train), (X_test, Y_test)
+
+
+# data pre-processing function
+def cifar_DNN_data_load(data, norm_data=1):
     (X_train, Y_train), (X_test, Y_test) = data.load_data()
 
 
@@ -45,8 +68,10 @@ def normalize(X_train, X_test):
 
     return X_train, X_test
 
-# plot history for accuracy
-def plot_acc(history, title = None):
+
+
+def figure_acc(history, title = None):
+    fig = plt.figure()
     if not isinstance(history, dict):
         history = history.history
 
@@ -59,9 +84,26 @@ def plot_acc(history, title = None):
     plt.xlabel('Epoch')
 
     plt.legend(['Train', 'Val'], loc=0)
+    return fig
 
-# plot history for loss
-def plot_loss(history, title = None):
+# plot history for accuracy
+def plot_acc(history, title = None):
+    fig = plt.figure()
+    if not isinstance(history, dict):
+        history = history.history
+
+    plt.plot(history['acc'])
+    plt.plot(history['val_acc'])
+    if title is not None:
+        plt.title(title)
+
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['Train', 'Val'], loc=0)
+
+def figure_loss(history, title = None):
+    fig = plt.figure()
+
     if not isinstance(history, dict):
         history = history.history
 
@@ -74,6 +116,26 @@ def plot_loss(history, title = None):
     plt.xlabel('Epoch')
 
     plt.legend(['Train', 'Val'], loc=0)
+
+
+    return fig
+
+# plot history for loss
+def plot_loss(history, title = None):
+    fig = plt.figure()
+    if not isinstance(history, dict):
+        history = history.history
+
+    plt.plot(history['loss'])
+    plt.plot(history['val_loss'])
+    if title is not None:
+        plt.title(title)
+
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+
+    plt.legend(['Train', 'Val'], loc=0)
+
 
 # show cifar images 4XN, if normalize is False
 # dataX : image data, image labels, number of images

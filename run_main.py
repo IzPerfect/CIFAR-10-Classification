@@ -25,7 +25,7 @@ def arg_parser():
 
 # main function
 def main(args):
-    (X_train, Y_train), (X_test, Y_test) = cifar10_data_load(datasets.cifar10, args.normalize)
+    (X_train, Y_train), (X_test, Y_test) = cifar_DNN_data_load(datasets.cifar10, args.normalize)
     cifar_model = CifarDNN(img_shape = X_train.shape[1], class_num = Y_train.shape[1],  learning_rate = args.learning_rate,
             actf = args.actf, layer1 = args.layer1, layer2 = args.layer2, drop_rate = args.drop_rate)
 
@@ -40,10 +40,13 @@ def main(args):
 
 
     # model history plot - loss and accuracy
+    plt.close('all') # close all figure when training
+
     plot_loss(history_train)
-    plt.show()
     plot_acc(history_train)
     plt.show()
+
+
 
 
 

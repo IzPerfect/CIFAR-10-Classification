@@ -5,11 +5,14 @@ from keras.optimizers import Adam
 from keras.layers.normalization import BatchNormalization
 from keras.callbacks import ModelCheckpoint
 from keras.models import load_model
+from keras.preprocessing.image import ImageDataGenerator
+
 import matplotlib.pyplot as plt
 import numpy as np
 from data_utils import *
 import os
 import time
+
 
 import tensorflow as tf
 config = tf.ConfigProto()
@@ -30,12 +33,8 @@ class CifarVGG(object):
 
         self.build_model()
 
-    def cifar10_normalize(self, x):
-        # cifar10 training set normalization
-        mean = 120.707
-        std = 64.15
-        #x = x / 255.
-        return (x-mean)/(std+1e-7)
+    def cifar10_data_input(self, x):
+        return x
 
     def cifar_shape(self, input_shape):
         return (input_shape[0], input_shape[1], input_shape[2])
@@ -59,9 +58,7 @@ class CifarVGG(object):
     def build_model(self):
         self.model = models.Sequential()
 
-        self.model.add(Lambda(self.cifar10_normalize, input_shape = self.img_shape))
-        #self.model.add(Lambda(lambda x: x / 255.0, input_shape = self.img_shape))
-        #self.model.add(Conv2D(64, (3, 3), padding='same', input_shape= self.img_shape))
+        self.model.add(Lambda(self.cifar10_data_input, input_shape = self.img_shape))
 
         self.conv_block(layers = 2, feature_maps = 64)
         self.conv_block(layers = 2, feature_maps = 128)
@@ -74,12 +71,12 @@ class CifarVGG(object):
         self.fc_block(4096)
         self.fc_block(4096)
 
-
         self.model.add(Dense(self.class_num))
         self.model.add(Activation('softmax'))
 
         self.model.compile(loss = 'categorical_crossentropy', optimizer = Adam(lr = self.learning_rate)
                           ,metrics = ['accuracy'])
+
 
 
 
@@ -98,25 +95,33 @@ class CifarVGG(object):
         cb_checkpoint = ModelCheckpoint(filepath = model_path, monitor = 'val_loss',
             verbose = 1, save_best_only = True)
 
+
+        start_time = time.time()
+
         self.history = self.model.fit(X_train, Y_train, epochs = epoch,
                                           batch_size = batch_size, validation_split = val_split,
                                             callbacks = [cb_checkpoint])
 
+        print("\n Training --- %s sec---" %(time.time() - start_time))
+
+
+        now = time.localtime()
+        time_now = "%04d-%02d-%02d_%02dh%02dm%02ds" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
 
         save_dir_history = './save_model/history/vgg_'+ time_now + '/'
         if not os.path.exists(save_dir_history): # if there is no exist, make the path
             os.makedirs(save_dir_history)
 
 
-        fig_acc = plt.figure(1)
-        plt.plot(self.history.history['acc'])
+        fig_acc = figure_acc(self.history)
         fig_acc.savefig(save_dir_history + 'acc_history' + '.jpg')
         np.save(save_dir_history + 'acc_history' + '.npy', self.history.history['acc'])
 
-        fig_loss = plt.figure(2)
-        plt.plot(self.history.history['loss'])
-        fig_acc.savefig(save_dir_history + 'loss_history' + '.jpg')
+        fig_loss = figure_loss(self.history)
+        fig_loss.savefig(save_dir_history + 'loss_history' + '.jpg')
         np.save(save_dir_history + 'loss_history' + '.npy', self.history.history['loss'])
+
+        plt.close('all')
 
 
         return self.history
