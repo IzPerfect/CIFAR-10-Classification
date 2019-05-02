@@ -4,10 +4,11 @@ import matplotlib.pyplot as plt
 import keras
 from sklearn import model_selection, metrics
 from sklearn.metrics import classification_report
+import math
 
 
 # data pre-processing function
-def cifar_VGG_data_load(data, norm_data=1):
+def cifar_VGG_data_load(data, std_data = None):
     (X_train, Y_train), (X_test, Y_test) = data.load_data()
 
     X_train = X_train.astype('float32')
@@ -17,20 +18,21 @@ def cifar_VGG_data_load(data, norm_data=1):
     Y_test = keras.utils.to_categorical(Y_test)
 
     print('Data type changed to float32, label type changed to categorical')
-    # normalize data
-    if norm_data == 1:
-        X_train, X_test = normalize(X_train, X_test)
-        print('Normalize Data')
+
+
+    if std_data == 1:
+        X_train, X_test = data_std(X_train, X_test)
+        print('Standardization Data')
     else:
-        pass
-    #X_train /= 255.
-    #X_test /= 255.
+        print('rescale = 1/255.')
+        X_train /= 255.
+        X_test /= 255.
 
     return (X_train, Y_train), (X_test, Y_test)
 
 
 # data pre-processing function
-def cifar_DNN_data_load(data, norm_data=1):
+def cifar_DNN_data_load(data, std_data = None):
     (X_train, Y_train), (X_test, Y_test) = data.load_data()
 
 
@@ -42,14 +44,13 @@ def cifar_DNN_data_load(data, norm_data=1):
     Y_test = keras.utils.to_categorical(Y_test)
 
     print('Data type changed to float32, label type changed to categorical')
-    # normalize data
+
     if norm_data == 1:
-        X_train, X_test = normalize(X_train, X_test)
-        print('Normalize Data')
+        X_train, X_test = data_std(X_train, X_test)
+        print('Standardization Data')
     else:
-        pass
-    #X_train /= 255.
-    #X_test /= 255.
+        X_train /= 255.
+        X_test /= 255.
 
     L, W, H, C = X_train.shape
     X_train = X_train.reshape(-1, W*H*C)
@@ -58,8 +59,8 @@ def cifar_DNN_data_load(data, norm_data=1):
 
     return (X_train, Y_train), (X_test, Y_test)
 
-# normalization of data
-def normalize(X_train, X_test):
+# standardization of data
+def data_std(X_train, X_test):
     mean = np.mean(X_train, axis=(0, 1, 2, 3))
     std = np.std(X_train, axis=(0, 1, 2, 3))
 
@@ -147,7 +148,7 @@ def show_images(dataX, dataY, num_images = 4):
     fig = plt.figure(figsize = (10,5))
 
     for i in range(num_images):
-        snap = fig.add_subplot(int(round(num_images/4)),4, i + 1)
+        snap = fig.add_subplot(int(math.ceil(num_images/4)),4, i + 1)
         snap.set_xticks([])
         snap.set_yticks([])
 
@@ -163,7 +164,7 @@ def show_images_compare(dataX, dataY, predY, num_images = 4):
     fig = plt.figure(figsize = (10,5))
 
     for i in range(num_images):
-        snap = fig.add_subplot(int(round(num_images/4)),4, i + 1)
+        snap = fig.add_subplot(int(math.ceil(num_images/4)),4, i + 1)
         snap.set_xticks([])
         snap.set_yticks([])
 
