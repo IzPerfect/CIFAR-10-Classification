@@ -81,7 +81,7 @@ class CifarVGG(object):
 
 
     # train model
-    def train(self, X_train, Y_train, epoch = 10, batch_size = 32, val_split = 0.2, save_model = True):
+    def train(self, X_train, Y_train, epoch = 10, batch_size = 32, val_split = 0.2, save_model = True, aug_data = False):
 
         # current time
         now = time.localtime()
@@ -98,9 +98,33 @@ class CifarVGG(object):
 
         start_time = time.time()
 
-        self.history = self.model.fit(X_train, Y_train, epochs = epoch,
-                                          batch_size = batch_size, validation_split = val_split,
-                                            callbacks = [cb_checkpoint])
+        if (aug_data):
+            print('Data augmentation and Train')
+            data_generator = ImageDataGenerator(
+                featurewise_center=True,
+                featurewise_std_normalization=True,
+                rotation_range=20,
+                width_shift_range=0.2,
+                height_shift_range=0.2,
+                horizontal_flip=True)
+
+            data_generator.fit(X_train)
+            train_generator = data_generator.flow(X_train, Y_train,
+                batch_size = batch_size)
+            val_generator = data_generator.flow(X_train, Y_train,
+                batch_size = batch_size)
+
+            self.history = self.model.fit_generator(train_generator,
+                steps_per_epoch = X_train.shape[0] // batch_size,
+                epochs = epoch,
+                validation_data = val_generator,
+                validation_steps = X_train.shape[0] // batch_size,
+                callbacks = [cb_checkpoint])
+
+        else:
+            self.history = self.model.fit(X_train, Y_train, epochs = epoch,
+                                              batch_size = batch_size, validation_split = val_split,
+                                                callbacks = [cb_checkpoint])
 
         print("\n Training --- %s sec---" %(time.time() - start_time))
 
