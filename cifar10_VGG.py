@@ -77,9 +77,18 @@ class CifarVGG(object):
         self.model.compile(loss = 'categorical_crossentropy', optimizer = Adam(lr = self.learning_rate)
                           ,metrics = ['accuracy'])
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
 
 
 
+>>>>>>> 27651cbe2f92a0bde9cfba9725b08ebdfe292fd7
+=======
+
+
+
+>>>>>>> 27651cbe2f92a0bde9cfba9725b08ebdfe292fd7
     # train model
     def train(self, X_train, Y_train, epoch = 10, batch_size = 32, val_split = 0.2, save_model = True, aug_data = False):
 

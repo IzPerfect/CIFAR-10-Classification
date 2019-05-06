@@ -20,7 +20,15 @@ def cifar_VGG_data_load(data, std_data = None):
     print('Data type changed to float32, label type changed to categorical')
 
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+    if std_data == True:
+=======
     if std_data == 1:
+>>>>>>> 27651cbe2f92a0bde9cfba9725b08ebdfe292fd7
+=======
+    if std_data == 1:
+>>>>>>> 27651cbe2f92a0bde9cfba9725b08ebdfe292fd7
         X_train, X_test = data_std(X_train, X_test)
         print('Standardization Data')
     else:
@@ -45,10 +53,24 @@ def cifar_DNN_data_load(data, std_data = None):
 
     print('Data type changed to float32, label type changed to categorical')
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+    if std_data == True:
+        X_train, X_test = data_std(X_train, X_test)
+        print('Standardization Data')
+    else:
+        print('rescale = 1/255.')
+=======
+=======
+>>>>>>> 27651cbe2f92a0bde9cfba9725b08ebdfe292fd7
     if norm_data == 1:
         X_train, X_test = data_std(X_train, X_test)
         print('Standardization Data')
     else:
+<<<<<<< HEAD
+>>>>>>> 27651cbe2f92a0bde9cfba9725b08ebdfe292fd7
+=======
+>>>>>>> 27651cbe2f92a0bde9cfba9725b08ebdfe292fd7
         X_train /= 255.
         X_test /= 255.
 
@@ -141,12 +163,32 @@ def plot_loss(history, title = None):
 # show cifar images 4XN, if normalize is False
 # dataX : image data, image labels, number of images
 # display original data, not pre-processing data
+<<<<<<< HEAD
+<<<<<<< HEAD
+def show_images(dataX, dataY, num_images = 4, categorical_data = False):
+
+    labels =  ['airplane','automobile','bird','cat','deer','dog','frog','horse','ship','truck']
+    if (categorical_data):
+        dataY = np.argmax(dataY, axis=1)
+
+
+    fig = plt.figure(figsize = (10,5))
+
+
+
+=======
+=======
+>>>>>>> 27651cbe2f92a0bde9cfba9725b08ebdfe292fd7
 def show_images(dataX, dataY, num_images = 4):
 
     labels =  ['airplane','automobile','bird','cat','deer','dog','frog','horse','ship','truck']
 
     fig = plt.figure(figsize = (10,5))
 
+<<<<<<< HEAD
+>>>>>>> 27651cbe2f92a0bde9cfba9725b08ebdfe292fd7
+=======
+>>>>>>> 27651cbe2f92a0bde9cfba9725b08ebdfe292fd7
     for i in range(num_images):
         snap = fig.add_subplot(int(math.ceil(num_images/4)),4, i + 1)
         snap.set_xticks([])

@@ -11,7 +11,16 @@ import os
 import time
 
 class CifarDNN(object):
+<<<<<<< HEAD
+<<<<<<< HEAD
+    def __init__(self, img_shape, class_num, actf = 'relu',
+        learning_rate = 0.001, layer1 = 32, layer2 = 64,  drop_rate = 0.2, do_drop = False):
+=======
     def __init__(self, img_shape, class_num, actf = 'relu', learning_rate = 0.001, layer1 = 32, layer2 = 64,  drop_rate = 0.2):
+>>>>>>> 27651cbe2f92a0bde9cfba9725b08ebdfe292fd7
+=======
+    def __init__(self, img_shape, class_num, actf = 'relu', learning_rate = 0.001, layer1 = 32, layer2 = 64,  drop_rate = 0.2):
+>>>>>>> 27651cbe2f92a0bde9cfba9725b08ebdfe292fd7
 
         self.learning_rate = learning_rate
         self.actf = actf
@@ -19,6 +28,7 @@ class CifarDNN(object):
         self.layer2 = layer2
         self.img_shape = img_shape
         self.class_num = class_num
+        self.do_drop = do_drop
         self.drop_rate = drop_rate
 
 
@@ -29,11 +39,11 @@ class CifarDNN(object):
         model = models.Sequential()
         model.add(Dense(self.layer1, input_shape = (self.img_shape,), name = "HiddenLayer1"))
         model.add(Activation(self.actf))
-        model.add(Dropout(self.drop_rate))
+        model.add(Dropout(self.drop_rate)) if self.do_drop else None
 
         model.add(Dense(self.layer2, name = "HiddenLayer2"))
         model.add(Activation(self.actf))
-        model.add(Dropout(self.drop_rate))
+        model.add(Dropout(self.drop_rate)) if self.do_drop else None
 
         model.add(Dense(self.class_num))
         model.add(Activation('softmax'))
