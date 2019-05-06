@@ -11,16 +11,8 @@ import os
 import time
 
 class CifarDNN(object):
-<<<<<<< HEAD
-<<<<<<< HEAD
     def __init__(self, img_shape, class_num, actf = 'relu',
         learning_rate = 0.001, layer1 = 32, layer2 = 64,  drop_rate = 0.2, do_drop = False):
-=======
-    def __init__(self, img_shape, class_num, actf = 'relu', learning_rate = 0.001, layer1 = 32, layer2 = 64,  drop_rate = 0.2):
->>>>>>> 27651cbe2f92a0bde9cfba9725b08ebdfe292fd7
-=======
-    def __init__(self, img_shape, class_num, actf = 'relu', learning_rate = 0.001, layer1 = 32, layer2 = 64,  drop_rate = 0.2):
->>>>>>> 27651cbe2f92a0bde9cfba9725b08ebdfe292fd7
 
         self.learning_rate = learning_rate
         self.actf = actf
