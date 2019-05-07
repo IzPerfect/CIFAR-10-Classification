@@ -49,8 +49,9 @@ class CifarVGG(object):
         conv_strides = 1, pooling_filter_size = (2, 2), pooling_strides = (2, 2)):
 
         for i in range(layers):
-            self.model.add(Conv2D(feature_maps, filter_size, padding = 'same', activation = self.actf))
+            self.model.add(Conv2D(feature_maps, filter_size, strides = conv_strides,  padding = 'same'))
             self.model.add(BatchNormalization()) if self.do_batch_norm else None
+            self.model.add(Activation(self.actf))
 
         self.model.add(MaxPooling2D(pooling_filter_size, strides = pooling_strides))
 
@@ -98,24 +99,41 @@ class CifarVGG(object):
         if (aug_data):
             print('Data augmentation and Train')
             data_generator = ImageDataGenerator(
-                featurewise_center=True,
-                featurewise_std_normalization=True,
                 rotation_range=20,
                 width_shift_range=0.2,
                 height_shift_range=0.2,
                 horizontal_flip=True)
 
+            val_data_generator = ImageDataGenerator()
+
+            # To split train, validation data
+            split_range = np.ceil(X_train.shape[0]-X_train.shape[0]*val_split).astype(np.int)
+            train_dataX = X_train[:]
+            train_dataY = Y_train[:]
+
+            X_train, X_val = train_dataX[:split_range], train_dataX[split_range:]
+            Y_train, Y_val = train_dataY[:split_range], train_dataY[split_range:]
+
+
             data_generator.fit(X_train)
-            train_generator = data_generator.flow(X_train, Y_train,
+            val_data_generator.fit(X_val)
+
+
+            train_generator = data_generator.flow(
+                X_train,
+                Y_train,
                 batch_size = batch_size)
-            val_generator = data_generator.flow(X_train, Y_train,
+
+            val_generator = val_data_generator.flow(
+                X_val,
+                Y_val,
                 batch_size = batch_size)
 
             self.history = self.model.fit_generator(train_generator,
                 steps_per_epoch = X_train.shape[0] // batch_size,
                 epochs = epoch,
                 validation_data = val_generator,
-                validation_steps = X_train.shape[0] // batch_size,
+                validation_steps = X_val.shape[0] // batch_size,
                 callbacks = [cb_checkpoint])
 
         else:
