@@ -190,10 +190,6 @@ def  confusion_mat(true_label, pred_label, target_names = None):
 
 def confusion_report(true_label, pred_label, target_names = None):
 
-    if target_names == None:
-        target_names = np.unique(true_label)
-        target_names = target_names.sort()
-
     confusion_report_result =\
         classification_report(true_label, pred_label, target_names=target_names)
 
