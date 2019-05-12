@@ -40,7 +40,9 @@ class CifarVGG(object):
         return (input_shape[0], input_shape[1], input_shape[2])
 
     def fc_block(self, layer_num):
-        self.model.add(Dense(layer_num, activation = self.actf))
+        self.model.add(Dense(layer_num))
+        self.model.add(BatchNormalization()) if self.do_batch_norm else None
+        self.model.add(Activation(self.actf))
         self.model.add(Dropout(self.drop_rate)) if self.do_drop else None
 
 
@@ -49,9 +51,12 @@ class CifarVGG(object):
         conv_strides = 1, pooling_filter_size = (2, 2), pooling_strides = (2, 2)):
 
         for i in range(layers):
-            self.model.add(Conv2D(feature_maps, filter_size, strides = conv_strides,  padding = 'same'))
+            self.model.add(Conv2D(feature_maps, filter_size, strides = conv_strides,
+                padding = 'same'))
             self.model.add(BatchNormalization()) if self.do_batch_norm else None
             self.model.add(Activation(self.actf))
+
+
 
         self.model.add(MaxPooling2D(pooling_filter_size, strides = pooling_strides))
 
@@ -73,6 +78,7 @@ class CifarVGG(object):
         self.fc_block(4096)
 
         self.model.add(Dense(self.class_num))
+        self.model.add(BatchNormalization()) if self.do_batch_norm else None
         self.model.add(Activation('softmax'))
 
         self.model.compile(loss = 'categorical_crossentropy', optimizer = Adam(lr = self.learning_rate)
