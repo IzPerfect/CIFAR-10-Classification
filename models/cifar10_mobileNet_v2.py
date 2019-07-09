@@ -7,6 +7,7 @@ from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator
+from keras import regularizers
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,32 +16,29 @@ import os
 import time
 
 
-import tensorflow as tf
-config = tf.ConfigProto()
-config.gpu_options.allow_growth = True
-session = tf.InteractiveSession(config=config)
-
 class MobileNetV2(object):
     def __init__(self, img_shape, class_num,
-        learning_rate = 0.001,  drop_rate = 0.5, do_drop = True):
+        learning_rate = 0.001,  drop_rate = 0.5, do_drop = True, weight_decay = 0.01):
 
         self.learning_rate = learning_rate
         self.img_shape = img_shape
         self.class_num = class_num
         self.drop_rate = drop_rate
         self.do_drop = do_drop
+        self.weight_decay = weight_decay
+
 
         self.model = self.build_model(self.class_num)
 
 
-    def conv_block(self, x, c_out, kernel_size, s, actf, name):
+    def conv_block(self, x, c_out, kernel_size, s, actf, name, weight_decay = 0):
         '''
         convolution block
             Can be 'Expansion' or 'projection' convolution layer block
             Convolution - BatchNormalization - ReLU6(or not)
         '''
         x = Conv2D(c_out , kernel_size, strides = s,
-                        padding = 'same', name = name + '_conv')(x)
+                        padding = 'same', kernel_regularizer=regularizers.l2(weight_decay), name = name + '_conv')(x)
         x = BatchNormalization(name = name + '_conv_batchnorm')(x)
 
         if actf:
@@ -48,21 +46,21 @@ class MobileNetV2(object):
 
         return x
 
-    def depthwise_conv_block(self, x, depth_conv_strides, name, kernel_size = (3, 3)):
+    def depthwise_conv_block(self, x, depth_conv_strides, name, weight_decay = 0, kernel_size = (3, 3)):
         '''
         depthwise convolution block
             depthwise convolution block
             Depthwise Convoltuion(3x3) - BatchNormalization - ReLU6
         '''
         x = DepthwiseConv2D(kernel_size, strides = depth_conv_strides, depth_multiplier = 1,
-            padding = 'same', name = name + '_depthwise_conv')(x)
+            padding = 'same', kernel_regularizer=regularizers.l2(weight_decay), name = name + '_depthwise_conv')(x)
         x = BatchNormalization(name = name + '_depth_conv_batchnorm')(x)
         x = Activation(lambda x: K.relu(x, max_value = 6.0), name = name + '_depth_conv_relu6')(x)
 
         return x
 
 
-    def inverted_residual_block(self, x, expanded_channels, c_out, depth_kernel_size, depth_conv_strides, name, kernel_size = (1, 1)
+    def inverted_residual_block(self, x, expanded_channels, c_out, depth_kernel_size, depth_conv_strides, weight_decay, name, kernel_size = (1, 1)
         , conv_strides = (1, 1)):
         '''
         inverted residual block
@@ -72,9 +70,9 @@ class MobileNetV2(object):
         '''
         in_channels = K.int_shape(x)[-1]
 
-        expansion_layer = self.conv_block(x, expanded_channels, kernel_size, conv_strides, actf = True, name = name + '_expansion')
-        depthwise_layer = self.depthwise_conv_block(expansion_layer, depth_conv_strides = depth_conv_strides, name = name + '_depthwise')
-        projection_layer = self.conv_block(depthwise_layer, c_out, kernel_size, conv_strides, actf = False, name = name + '_projection')
+        expansion_layer = self.conv_block(x, expanded_channels, kernel_size, conv_strides, actf = True, weight_decay = weight_decay, name = name + '_expansion')
+        depthwise_layer = self.depthwise_conv_block(expansion_layer, depth_conv_strides = depth_conv_strides, weight_decay = weight_decay, name = name + '_depthwise')
+        projection_layer = self.conv_block(depthwise_layer, c_out, kernel_size, conv_strides, actf = False, weight_decay = weight_decay, name = name + '_projection')
 
         # Check the number of channels and strides to add
         if in_channels == c_out and depth_conv_strides == (1, 1):
@@ -84,17 +82,18 @@ class MobileNetV2(object):
         return x
 
 
-    def bottleneck(self, x, depth_kernel_size, t, c, n, s, name):
+    def bottleneck(self, x, depth_kernel_size, t, c, n, s, weight_decay, name):
         '''
             This function defines a sequence of 1 or more inverted residual block blocks
         '''
         in_channels = K.int_shape(x)[-1]
-        x = self.inverted_residual_block(x, t*in_channels, c, depth_kernel_size = depth_kernel_size, depth_conv_strides = s, name = name + str(0))
+        x = self.inverted_residual_block(x, t*in_channels, c, depth_kernel_size = depth_kernel_size, depth_conv_strides = s,
+            weight_decay = weight_decay, name = name + str(0))
 
         for i in range(1, n):
             in_channels = K.int_shape(x)[-1]
-            x = self.inverted_residual_block(x, t*in_channels, c, depth_kernel_size = depth_kernel_size, depth_conv_strides = (1, 1), name = name + str(i))
-
+            x = self.inverted_residual_block(x, t*in_channels, c, depth_kernel_size = depth_kernel_size, depth_conv_strides = (1, 1),
+                weight_decay = weight_decay, name = name + str(i))
         return x
 
 
@@ -103,15 +102,15 @@ class MobileNetV2(object):
 
         x = self.conv_block(inputs, c_out = 32, kernel_size = (3, 3), s = (2, 2), actf = True, name = 'conv2d_layer1')
 
-        x = self.bottleneck(x, depth_kernel_size = (3, 3), t = 1, c = 16, n = 1, s = (1, 1), name = 'bottleneck_1')
-        x = self.bottleneck(x, depth_kernel_size = (3, 3), t = 6, c = 24, n = 2, s = (2, 2), name = 'bottleneck_2')
-        x = self.bottleneck(x, depth_kernel_size = (3, 3), t = 6, c = 32, n = 3, s = (2, 2), name = 'bottleneck_3')
-        x = self.bottleneck(x, depth_kernel_size = (3, 3), t = 6, c = 64, n = 4, s = (2, 2), name = 'bottleneck_4')
-        x = self.bottleneck(x, depth_kernel_size = (3, 3), t = 6, c = 96, n = 3, s = (1, 1), name = 'bottleneck_5')
-        x = self.bottleneck(x, depth_kernel_size = (3, 3), t = 6, c = 160, n = 3, s = (2, 2), name = 'bottleneck_6')
-        x = self.bottleneck(x, depth_kernel_size = (3, 3), t = 6, c = 320, n = 1, s = (1, 1), name = 'bottleneck_7')
+        x = self.bottleneck(x, depth_kernel_size = (3, 3), t = 1, c = 16, n = 1, s = (1, 1), weight_decay = self.weight_decay, name = 'bottleneck_1')
+        x = self.bottleneck(x, depth_kernel_size = (3, 3), t = 6, c = 24, n = 2, s = (2, 2), weight_decay = self.weight_decay, name = 'bottleneck_2')
+        x = self.bottleneck(x, depth_kernel_size = (3, 3), t = 6, c = 32, n = 3, s = (2, 2), weight_decay = self.weight_decay, name = 'bottleneck_3')
+        x = self.bottleneck(x, depth_kernel_size = (3, 3), t = 6, c = 64, n = 4, s = (2, 2), weight_decay = self.weight_decay, name = 'bottleneck_4')
+        x = self.bottleneck(x, depth_kernel_size = (3, 3), t = 6, c = 96, n = 3, s = (1, 1), weight_decay = self.weight_decay, name = 'bottleneck_5')
+        x = self.bottleneck(x, depth_kernel_size = (3, 3), t = 6, c = 160, n = 3, s = (2, 2), weight_decay = self.weight_decay, name = 'bottleneck_6')
+        x = self.bottleneck(x, depth_kernel_size = (3, 3), t = 6, c = 320, n = 1, s = (1, 1), weight_decay = self.weight_decay, name = 'bottleneck_7')
 
-        x = self.conv_block(x, c_out = 1280, kernel_size = (1, 1), s = (1, 1), actf = True, name = 'conv2d_layer2')
+        x = self.conv_block(x, c_out = 1280, kernel_size = (1, 1), s = (1, 1), actf = False, name = 'conv2d_layer2')
 
         x = GlobalAveragePooling2D()(x)
         x = Reshape((1, 1, -1))(x)
@@ -134,7 +133,7 @@ class MobileNetV2(object):
         now = time.localtime()
         time_now = "%04d-%02d-%02d_%02dh%02dm%02ds" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
 
-        save_dir = './save_model/model/vgg_' + time_now + '/'
+        save_dir = './save_model/model/mobilenetv2_' + time_now + '/'
         if not os.path.exists(save_dir): # if there is no exist, make the path
             os.makedirs(save_dir)
 
@@ -197,7 +196,7 @@ class MobileNetV2(object):
         now = time.localtime()
         time_now = "%04d-%02d-%02d_%02dh%02dm%02ds" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
 
-        save_dir_history = './save_model/history/vgg_'+ time_now + '/'
+        save_dir_history = './save_model/history/mobilenetv2_'+ time_now + '/'
         if not os.path.exists(save_dir_history): # if there is no exist, make the path
             os.makedirs(save_dir_history)
 
